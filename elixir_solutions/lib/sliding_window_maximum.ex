@@ -1,53 +1,81 @@
+# https://leetcode.com/problems/sliding-window-smax/description/
+# https://www.youtube.com/watch?v=39grPZtywyQ&t=963s
 defmodule SlidingWindowMaximum do
-  @empty_queue {[], []}
   import Enum
+  alias SlidingWindowMaximum, as: SMax
+
+  defstruct ~w[userful_inxs max_list inx]a
+  @empty_queue {[], []}
 
   def maximum(tuple, window_size) when tuple_size(tuple) < window_size,
     do: {:error, :window_is_too_big}
 
   def maximum(tuple, window_size) do
-    {:ok, get_maximum(tuple, window_size, :queue.new(), 0, [])}
+    %SMax{userful_inxs: :queue.new(), max_list: [], inx: 0}
+    |> build_max_list(tuple, window_size)
+    |> format_return
   end
 
-  defp get_maximum(tuple, _, _, inx, output) when inx >= tuple_size(tuple),
-    do: Enum.reverse(output)
+  defp build_max_list(%SMax{max_list: max_list, inx: inx} = smax, tuple, _)
+       when inx >= tuple_size(tuple),
+       do: smax
 
-  defp get_maximum(tuple, window_size, userful_inxs, inx, output) do
-    userful_inxs =
-      userful_inxs
-      |> remove_useless_inxs(tuple, elem(tuple, inx))
-      |> remove_out_of_window_inxs(window_size, inx)
-
-    userful_inxs = :queue.in(inx, userful_inxs)
-
-    output = next_output(tuple, window_size, userful_inxs, inx, output)
-    get_maximum(tuple, window_size, userful_inxs, inx + 1, output)
+  defp build_max_list(%SMax{} = smax, tuple, window_size) do
+    smax
+    |> remove_inxs_useless(tuple)
+    |> remove_inxs_out_of_window(window_size)
+    |> add_current_inx_as_userful
+    |> add_to_max_list(tuple, window_size)
+    |> increment_inx
+    |> build_max_list(tuple, window_size)
   end
 
-  defp remove_useless_inxs(@empty_queue = userful_inxs, _, _), do: userful_inxs
-
-  defp remove_useless_inxs(userful_inxs, tuple, value) do
-    {{:value, head}, tail} = :queue.out_r(userful_inxs)
-
-    if elem(tuple, head) < value,
-      do: remove_useless_inxs(tail, tuple, value),
-      else: userful_inxs
+  defp add_current_inx_as_userful(%SMax{userful_inxs: inxs, inx: inx} = smax) do
+    %{smax | userful_inxs: :queue.in(inx, inxs)}
   end
 
-  defp remove_out_of_window_inxs(@empty_queue = userful_inxs, _, _), do: userful_inxs
+  defp remove_inxs_useless(%SMax{userful_inxs: @empty_queue} = smax, _), do: smax
 
-  defp remove_out_of_window_inxs(userful_inxs, window_size, inx) do
-    {{:value, head}, tail} = :queue.out_r(userful_inxs)
+  defp remove_inxs_useless(%SMax{userful_inxs: inxs, inx: inx} = smax, tuple) do
+    {{:value, head}, tail} = :queue.out_r(inxs)
 
-    if head <= inx - window_size,
-      do: remove_out_of_window_inxs(tail, window_size, inx),
-      else: userful_inxs
+    if elem(tuple, head) < elem(tuple, inx) do
+      %{smax | userful_inxs: tail}
+      |> remove_inxs_useless(tuple)
+    else
+      smax
+    end
   end
 
-  defp next_output(_, window_size, _, inx, _) when inx < window_size - 1,
-    do: []
+  defp remove_inxs_out_of_window(%SMax{userful_inxs: @empty_queue} = smax, _), do: smax
 
-  defp next_output(tuple, _, userful_inxs, _, output) do
-    [elem(tuple, :queue.peek(userful_inxs) |> elem(1)) | output]
+  defp remove_inxs_out_of_window(
+         %SMax{userful_inxs: inxs, inx: inx} = smax,
+         window_size
+       ) do
+    {{:value, head}, tail} = :queue.out_r(inxs)
+
+    if head <= inx - window_size do
+      %{smax | userful_inxs: tail}
+      |> remove_inxs_out_of_window(window_size)
+    else
+      smax
+    end
   end
+
+  defp add_to_max_list(%SMax{inx: inx} = smax, _, window_size)
+       when inx < window_size - 1,
+       do: smax
+
+  defp add_to_max_list(
+         %SMax{userful_inxs: inxs, max_list: max_list} = smax,
+         tuple,
+         _
+       ) do
+    %{smax | max_list: [elem(tuple, :queue.peek(inxs) |> elem(1)) | max_list]}
+  end
+
+  defp increment_inx(%SMax{inx: inx} = smax), do: %{smax | inx: inx + 1}
+
+  defp format_return(%SMax{max_list: max_list}), do: {:ok, Enum.reverse(max_list)}
 end
