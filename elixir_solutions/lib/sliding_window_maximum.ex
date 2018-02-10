@@ -39,7 +39,7 @@ defmodule SlidingWindowMaximum do
   defp remove_inxs_useless(%SMax{userful_inxs: inxs, inx: inx} = smax, tuple) do
     {{:value, head}, tail} = :queue.out_r(inxs)
 
-    if elem(tuple, head) < elem(tuple, inx) do
+    if elem(tuple, head) <= elem(tuple, inx) do
       %{smax | userful_inxs: tail}
       |> remove_inxs_useless(tuple)
     else

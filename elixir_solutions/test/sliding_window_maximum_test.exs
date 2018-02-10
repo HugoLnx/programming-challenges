@@ -7,6 +7,11 @@ defmodule SlidingWindowMaximumTest do
     assert result == {:ok, [3,3,5,5,6,7]}
   end
 
+  test "get the maximum number of each subarray of a specified size even with repeated elements " do
+    result = maximum({9, 9, 3, 4, 2, 7, 10}, 4)
+    assert result == {:ok, [9, 9, 7, 10]}
+  end
+
   test "get the maximum number of the array if window and array has the same size" do
     result = maximum({9, 3, 4, 5}, 4)
     assert result == {:ok, [9]}
