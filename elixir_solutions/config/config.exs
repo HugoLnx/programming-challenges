@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :twosum, key: :value
+#     config :elixir_solutions, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:twosum, :key)
+#     Application.get_env(:elixir_solutions, :key)
 #
 # You can also configure a 3rd-party app:
 #
