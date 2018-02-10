@@ -1,24 +1,50 @@
 defmodule SlidingWindowMaximumSum do
   import Enum
 
-  def max_window(tuple, window_size) when tuple_size(tuple) < window_size do
-    {:error, :window_is_too_big}
-  end
+  alias SlidingWindowMaximumSum, as: MSum
+
+  defstruct ~w[tuple window_size window_inx window_sum max_sum]a
+
+  def max_window(tuple, window_size) when tuple_size(tuple) < window_size,
+    do: {:error, :window_is_too_big}
 
   def max_window(tuple, window_size) do
-    window_sum = 0..(window_size - 1) |> reduce(0, fn i, sum -> elem(tuple, i) + sum end)
-    slide_through(tuple, window_size, 1, window_sum, window_sum)
+    %MSum{tuple: tuple, window_size: window_size, window_inx: 0, window_sum: nil, max_sum: nil}
+    |> calculate_window_sum
+    |> update_max_sum
+    |> slide_through
+    |> format_return
   end
 
-  def slide_through(tuple, window_size, window_inx, prev_window_sum, max_sum)
-      when window_size + window_inx > tuple_size(tuple) do
-    {:ok, max_sum}
+  defp calculate_window_sum(%MSum{tuple: tuple, window_size: size, window_inx: inx} = maximum) do
+    %{maximum | window_sum: sum_tuple_slice(tuple, inx, size)}
   end
 
-  def slide_through(tuple, window_size, window_inx, prev_window_sum, max_sum) do
-    window_sum =
-      prev_window_sum - elem(tuple, window_inx - 1) + elem(tuple, window_inx + window_size - 1)
+  defp update_max_sum(%MSum{window_sum: sum, max_sum: nil} = maximum),
+    do: %{maximum | max_sum: sum}
 
-    slide_through(tuple, window_size, window_inx + 1, window_sum, max([max_sum, window_sum]))
+  defp update_max_sum(%MSum{window_sum: sum, max_sum: max_sum} = maximum),
+    do: %{maximum | max_sum: max([sum, max_sum])}
+
+  defp slide_through(%MSum{tuple: tuple, window_size: size, window_inx: inx} = maximum)
+       when size + inx >= tuple_size(tuple),
+       do: maximum
+
+  defp slide_through(%MSum{} = maximum) do
+    maximum
+    |> step
+    |> update_max_sum
+    |> slide_through
+  end
+
+  defp step(%MSum{tuple: tuple, window_size: size, window_inx: inx, window_sum: sum} = maximum) do
+    %{maximum | window_sum: sum - elem(tuple, inx) + elem(tuple, inx + size), window_inx: inx + 1}
+  end
+
+  defp format_return(%MSum{max_sum: max_sum}), do: {:ok, max_sum}
+
+  defp sum_tuple_slice(tuple, slice_inx, slice_size) do
+    slice_inx..(slice_size - 1)
+    |> reduce(0, fn i, sum -> elem(tuple, i) + sum end)
   end
 end
