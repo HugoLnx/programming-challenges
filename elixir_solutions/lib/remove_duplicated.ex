@@ -2,15 +2,19 @@
 
 defmodule RemoveDuplicated do
   def solve(list, last_el \\ nil)
+
   def solve([], _last_el) do
     []
   end
+
   def solve([head | tail], nil) do
     [head | solve(tail, head)]
   end
+
   def solve([head | tail], last_el) when head == last_el do
     solve(tail, head)
   end
+
   def solve([head | tail], _last_el) do
     [head | solve(tail, head)]
   end
@@ -24,6 +28,6 @@ defmodule RemoveDuplicated2 do
       el, {_last_elem, new_list} -> {el, [el | new_list]}
     end)
     |> elem(1)
-    |> Enum.reverse
+    |> Enum.reverse()
   end
 end
